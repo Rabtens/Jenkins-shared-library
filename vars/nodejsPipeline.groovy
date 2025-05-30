@@ -21,7 +21,7 @@ def call(Map config = [:]) {
         agent any
         
         environment {
-            DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials')
+            DOCKER_HUB_CREDENTIALS = credentials('dockerhub-credentials')
         }
         
         stages {
