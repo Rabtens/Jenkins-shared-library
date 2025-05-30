@@ -1,40 +1,30 @@
 def call(Map config = [:]) {
-    pipeline {
-        agent any
+    def image = config.imageName ?: 'default-node-image'
 
+    pipeline {
+        agent {
+            docker {
+                image "node:18"
+            }
+        }
         stages {
-            stage('Install Dependencies') {
+            stage('Install') {
                 steps {
                     sh 'npm install'
                 }
             }
-
-            stage('Run Tests') {
+            stage('Test') {
                 steps {
                     sh 'npm test'
                 }
             }
-
             stage('Build Docker Image') {
                 steps {
                     script {
-                        def imageName = config.imageName ?: 'my-node-app'
-                        sh "docker build -t ${imageName} ."
-                    }
-                }
-            }
-
-            stage('Push Docker Image') {
-                steps {
-                    script {
-                        def imageName = config.imageName ?: 'my-node-app'
-                        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                            sh """
-                                echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                                docker tag ${imageName} $DOCKER_USER/${imageName}
-                                docker push $DOCKER_USER/${imageName}
-                            """
-                        }
+                        sh """
+                        docker build -t ${image} .
+                        docker push ${image}
+                        """
                     }
                 }
             }
