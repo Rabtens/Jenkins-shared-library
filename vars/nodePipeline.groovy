@@ -2,8 +2,8 @@ def call(Map config = [:]) {
     pipeline {
         agent any
         environment {
-            IMAGE_NAME = config.dockerImage ?: 'rabtens/simple-node-app'
-            IMAGE_TAG = config.imageTag ?: 'latest'
+            IMAGE_NAME = config.dockerImage ?: "rabtens"
+            IMAGE_TAG = config.imageTag ?: "latest"
         }
         stages {
             stage('Install Dependencies') {
