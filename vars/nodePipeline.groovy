@@ -1,53 +1,38 @@
 def call(Map config = [:]) {
     pipeline {
         agent any
-
         environment {
-            IMAGE_NAME = config.imageName ?: 'my-node-app'
+            IMAGE_NAME = config.dockerImage ?: 'rabtens/simple-node-app'
+            IMAGE_TAG = config.imageTag ?: 'latest'
         }
-
         stages {
             stage('Install Dependencies') {
                 steps {
-                    echo 'Installing Node.js dependencies...'
-                    sh 'npm ci'  // More reliable than `npm install` for CI
+                    sh 'npm install'
                 }
             }
-
             stage('Run Tests') {
                 steps {
-                    echo 'Running Jest tests...'
                     sh 'npm test'
                 }
             }
-
             stage('Build Docker Image') {
                 steps {
-                    echo "Building Docker image: ${env.IMAGE_NAME}"
-                    sh "docker build -t ${env.IMAGE_NAME} ."
+                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
                 }
             }
-
             stage('Push Docker Image') {
                 steps {
-                    echo "Pushing Docker image to DockerHub..."
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        sh """
-                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                            docker tag ${env.IMAGE_NAME} $DOCKER_USER/${env.IMAGE_NAME}
-                            docker push $DOCKER_USER/${env.IMAGE_NAME}
-                        """
+                    withCredentials([usernamePassword(
+                        credentialsId: 'dockerhub-creds',
+                        passwordVariable: 'DOCKER_PASSWORD',
+                        usernameVariable: 'DOCKER_USERNAME'
+                    )]) {
+                        sh 'echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin'
+                        sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
+                        sh 'docker logout'
                     }
                 }
-            }
-        }
-
-        post {
-            success {
-                echo '✅ CI/CD pipeline completed successfully.'
-            }
-            failure {
-                echo '❌ CI/CD pipeline failed.'
             }
         }
     }
