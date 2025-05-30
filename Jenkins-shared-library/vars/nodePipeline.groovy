@@ -1,17 +1,20 @@
 def call(Map config = [:]) {
     pipeline {
         agent any
+
         stages {
             stage('Install Dependencies') {
                 steps {
                     sh 'npm install'
                 }
             }
+
             stage('Run Tests') {
                 steps {
                     sh 'npm test'
                 }
             }
+
             stage('Build Docker Image') {
                 steps {
                     script {
@@ -20,7 +23,8 @@ def call(Map config = [:]) {
                     }
                 }
             }
-            stage('Push to DockerHub') {
+
+            stage('Push Docker Image') {
                 steps {
                     script {
                         def imageName = config.imageName ?: 'my-node-app'
